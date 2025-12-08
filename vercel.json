@@ -1,6 +1,7 @@
 {
+  "version": 2,
   "buildCommand": "npx prisma generate && npx prisma db push && next build",
   "installCommand": "npm install",
   "framework": "nextjs",
-  "regions": ["iad1"]
+  "rootDirectory": "damelie-pa"
 }
