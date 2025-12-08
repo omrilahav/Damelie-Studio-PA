@@ -1,6 +1,9 @@
 import { Sidebar } from "@/components/layout/sidebar";
 import { db } from "@/lib/db";
 
+// Force dynamic rendering for all dashboard pages (requires database)
+export const dynamic = "force-dynamic";
+
 async function getSidebarData() {
   const [pendingReminders, overdueTasksCount] = await Promise.all([
     db.reminder.count({ where: { status: "DRAFT" } }),
