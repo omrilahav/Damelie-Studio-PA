@@ -1,7 +1,4 @@
 {
-  "$schema": "https://openapi.vercel.sh/vercel.json",
-  "framework": "nextjs",
-  "installCommand": "cd damelie-pa && npm install",
-  "buildCommand": "cd damelie-pa && npx prisma generate && next build",
-  "outputDirectory": "damelie-pa/.next"
+  "buildCommand": "npx prisma generate && next build",
+  "framework": "nextjs"
 }
