@@ -1,0 +1,154 @@
+// Damelie Studio PA - Database Schema
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// ============================================
+// CORE ENTITIES
+// ============================================
+
+model Client {
+  id        String    @id @default(cuid())
+  name      String
+  company   String?
+  email     String?
+  phone     String?
+  address   String?
+  notes     String?
+  projects  Project[]
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+}
+
+model Project {
+  id               String            @id @default(cuid())
+  name             String
+  status           String            @default("LEAD") // LEAD, NEGOTIATION, ACTIVE, ON_HOLD, CLOSED_WON, CLOSED_LOST
+  clientId         String?
+  client           Client?           @relation(fields: [clientId], references: [id], onDelete: SetNull)
+  description      String?
+  location         String?
+  budget           Float?
+  estimatedHours   Float?
+  actualHours      Float             @default(0)
+  driveFolder      String?
+  priority         Int               @default(5)
+  startDate        DateTime?
+  endDate          DateTime?
+  tasks            Task[]
+  meetings         Meeting[]
+  financialEntries FinancialEntry[]
+  boqItems         BoQItem[]
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
+}
+
+model Task {
+  id          String     @id @default(cuid())
+  title       String
+  description String?
+  status      String     @default("OPEN") // OPEN, PENDING, AWAITING_PRICE, AWAITING_CLIENT, IN_PROGRESS, COMPLETE, CANCELLED
+  priority    String     @default("NORMAL") // URGENT_PAYMENT, BOQ_OFFER, REPORT, OPPORTUNITY, NORMAL
+  dueDate     DateTime?
+  projectId   String?
+  project     Project?   @relation(fields: [projectId], references: [id], onDelete: SetNull)
+  meetingId   String?
+  meeting     Meeting?   @relation(fields: [meetingId], references: [id], onDelete: SetNull)
+  reminders   Reminder[]
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+}
+
+model Meeting {
+  id             String   @id @default(cuid())
+  title          String
+  date           DateTime
+  type           String   @default("MEETING") // MEETING, SITE_VISIT, CALL
+  projectId      String
+  project        Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  rawNotes       String?
+  summary        String?
+  decisions      String?  // JSON array stored as string
+  extractedTasks Task[]
+  confirmed      Boolean  @default(false)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+}
+
+model Reminder {
+  id        String   @id @default(cuid())
+  taskId    String
+  task      Task     @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  message   String
+  recipient String?
+  status    String   @default("DRAFT") // DRAFT, APPROVED, SENT, CANCELLED
+  sentAt    DateTime?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model FinancialEntry {
+  id          String   @id @default(cuid())
+  projectId   String
+  project     Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  type        String   // BUDGET, INVOICE_SENT, INVOICE_PAID, COST, ESTIMATE
+  amount      Float
+  description String
+  date        DateTime
+  invoiceRef  String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model BoQItem {
+  id        String   @id @default(cuid())
+  projectId String?
+  project   Project? @relation(fields: [projectId], references: [id], onDelete: SetNull)
+  category  String
+  item      String
+  unit      String
+  quantity  Float?
+  unitPrice Float
+  source    String?
+  notes     String?
+  date      DateTime @default(now())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// ============================================
+// SYSTEM SETTINGS
+// ============================================
+
+model SystemSettings {
+  id                    String   @id @default("default")
+  userName              String   @default("User")
+  defaultCurrency       String   @default("EUR")
+  workingHoursPerDay    Float    @default(8)
+  weeklyCapacityHours   Float    @default(40)
+  marginWarningThreshold Float   @default(10) // Percentage
+  aiProvider            String   @default("anthropic")
+  anthropicApiKey       String?  // Encrypted API key for Anthropic
+  openaiApiKey          String?  // Encrypted API key for OpenAI
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+}
+
+// ============================================
+// ACTIVITY LOG
+// ============================================
+
+model ActivityLog {
+  id          String   @id @default(cuid())
+  entityType  String   // PROJECT, TASK, MEETING, etc.
+  entityId    String
+  action      String   // CREATED, UPDATED, COMPLETED, etc.
+  description String
+  metadata    String?  // JSON stored as string
+  createdAt   DateTime @default(now())
+}
